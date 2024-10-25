@@ -13,15 +13,17 @@ if ($conn->connect_error) {
 }
 
 if ($_SERVER["REQUEST_METHOD"] == "POST" && !empty($_POST["task"])) {
-   // $task = htmlspecialchars($_POST["task"]);
     $task = $_POST["task"];
-    $sql = "INSERT INTO tasks (task) VALUES ('$task')";
-    if ($conn->query($sql) === TRUE) {
+
+    // Prepara e executa a consulta
+    $stmt = $conn->prepare("INSERT INTO tasks (task) VALUES (?)");
+    $stmt->bind_param("s", $task);
+    if ($stmt->execute()) {
         echo "Nova tarefa adicionada com sucesso";
-        echo $sql;
     } else {
-        echo "Erro: " . $sql . "<br>" . $conn->error;
+        echo "Erro: " . $stmt->error;
     }
+    $stmt->close();
 }
 
 $result = $conn->query("SELECT * FROM tasks");
@@ -42,7 +44,7 @@ $result = $conn->query("SELECT * FROM tasks");
         <?php
         if ($result->num_rows > 0) {
             while($row = $result->fetch_assoc()) {
-                echo "<li>" . $row["task"] . "</li>";
+                echo "<li>" . htmlspecialchars($row["task"]) . "</li>";
             }
         } else {
             echo "0 tarefas";
