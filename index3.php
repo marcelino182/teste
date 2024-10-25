@@ -13,14 +13,21 @@ if ($conn->connect_error) {
 }
 
 if ($_SERVER["REQUEST_METHOD"] == "POST" && !empty($_POST["task"])) {
-   // $task = htmlspecialchars($_POST["task"]);
     $task = $_POST["task"];
-    $sql = "INSERT INTO tasks (task) VALUES ('$task')";
-    if ($conn->query($sql) === TRUE) {
-        echo "Nova tarefa adicionada com sucesso";
-        echo $sql;
+
+    // Valida apenas caracteres alfanuméricos
+    if (preg_match("/^[a-zA-Z0-9 ]*$/", $task)) {
+        // Prepara e executa a consulta
+        $stmt = $conn->prepare("INSERT INTO tasks (task) VALUES (?)");
+        $stmt->bind_param("s", $task);
+        if ($stmt->execute()) {
+            echo "Nova tarefa adicionada com sucesso";
+        } else {
+            echo "Erro: " . $stmt->error;
+        }
+        $stmt->close();
     } else {
-        echo "Erro: " . $sql . "<br>" . $conn->error;
+        echo "Erro: A tarefa deve conter apenas caracteres alfanuméricos.";
     }
 }
 
@@ -42,7 +49,7 @@ $result = $conn->query("SELECT * FROM tasks");
         <?php
         if ($result->num_rows > 0) {
             while($row = $result->fetch_assoc()) {
-                echo "<li>" . $row["task"] . "</li>";
+                echo "<li>" . htmlspecialchars($row["task"]) . "</li>";
             }
         } else {
             echo "0 tarefas";
